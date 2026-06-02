@@ -39,3 +39,20 @@ def place_order(req: func.HttpRequest) -> func.HttpResponse:
         status_code=200,
         mimetype="application/json"
         )
+
+@app.route(route="get_order_status", methods=["GET"])
+def get_order_status(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("Get order status function triggered")  
+
+    order_id = req.params.get('order_id')
+    if not order_id:
+        return func.HttpResponse(
+            body=json.dumps({"error": "order ID is required"}),
+            status_code=400,
+            mimetype="application/json"
+            )
+    return func.HttpResponse(
+        body=json.dumps({"order_id": order_id, "status": "processing"}),
+        status_code=200,
+        mimetype="application/json"
+    )
