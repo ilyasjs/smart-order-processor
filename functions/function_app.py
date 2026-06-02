@@ -56,3 +56,55 @@ def get_order_status(req: func.HttpRequest) -> func.HttpResponse:
         status_code=200,
         mimetype="application/json"
     )
+
+
+@app.route(route="process_payment", methods=["POST"])
+def process_payment(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("Process payment function triggered")
+    
+    api_key = req.headers.get('x-api-key')
+    if not api_key:
+        return func.HttpResponse(
+            body=json.dumps({"error": "invalid API key"}),
+            status_code=401,
+            mimetype="application/json"
+            )
+    
+    try:
+        req_body = req.get_json()
+    except ValueError:
+        return func.HttpResponse(
+            body=json.dumps({"error": "invalid JSON in request body"}),
+            status_code=400,
+            mimetype="application/json"
+        )
+    
+    if not req_body:
+        return func.HttpResponse(
+            body=json.dumps({"error": "request body is required"}),
+            status_code=400,
+            mimetype="application/json"
+        )
+    order_id = req_body.get('order_id')
+    amount = req_body.get('amount')
+    payment_method = req_body.get('payment_method')
+
+
+    if not order_id or not amount or not payment_method:
+        return func.HttpResponse(
+            body=json.dumps({"error": "order ID, amount and payment method are required"}),
+            status_code=400,
+            mimetype="application/json"
+                
+        )
+    
+    return func.HttpResponse(
+        body=json.dumps({
+            "order_id": order_id,
+            "amount": amount,
+            "payment_method": payment_method,
+            "status": "payment_received"
+        }),
+        status_code=200,
+        mimetype="application/json"
+    )
