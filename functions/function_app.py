@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 import uuid
+import os
+from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 app = func.FunctionApp()
 
@@ -33,9 +35,32 @@ def place_order(req: func.HttpRequest) -> func.HttpResponse:
     
     # generate a unique order ID
     order_id = str(uuid.uuid4())
+    # create order message
+    order_message = json.dumps({
+        "order_id": order_id,
+        "item": item,
+        "quantity": quantity,
+        "status": "received"
+    })
+
+    # send to Service Bus
+    try:
+        connection_string = os.environ["SERVICE_BUS_CONNECTION"]
+        with ServiceBusClient.from_connection_string(connection_string) as client:
+            with client.get_queue_sender("orders-queue") as sender:
+                sender.send_messages(ServiceBusMessage(order_message))
+        logging.info(f"Order {order_id} sent to Service Bus queue")
+    except Exception as e:
+        logging.error(f"Failed to send to Service Bus: {str(e)}")
+        return func.HttpResponse(
+            body=json.dumps({"error": "failed to queue order"}),
+            status_code=500,
+            mimetype="application/json"
+        )
+    logging.info(f"Order {order_id} sent to Service Bus queue")
     # return a 200 response with the order ID
     return func.HttpResponse(
-        body=json.dumps({"order_id": order_id, "status": "received"}),
+        body=order_message,
         status_code=200,
         mimetype="application/json"
         )
