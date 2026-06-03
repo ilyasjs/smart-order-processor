@@ -1,0 +1,33 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: BuildJob
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.11'
+            displayName: 'Use Python 3.11'
+
+          - script: |
+              cd functions
+              python -m venv .venv
+              source .venv/bin/activate
+              pip install -r requirements.txt
+            displayName: 'Install dependencies'
+          
+          - script: |
+              cd functions
+              source .venv/bin/activate
+              pytest ../tests/test_functions.py -v
+            displayName: 'Run tests'
+
+          - script: |
+              az bicep build --file infra/main.bicep
+            displayName: 'Validate Bicep'
