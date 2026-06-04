@@ -3,6 +3,7 @@ param location string = 'swedencentral'
 param serviceBusName string = 'smart-order-processor-sb'
 param appServicePlanName string = 'smart-order-processor-plan'
 param functionAppName string = 'smart-order-processor-func'
+param databaseAccountName string = 'smart-order-processor-db'
 
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
@@ -55,5 +56,21 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         siteConfig: {
             pythonVersion: '3.11'
         }
+    }
+}
+
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2025-11-01-preview' = {
+    name: databaseAccountName
+    location: location
+    kind: 'GlobalDocumentDB'
+    properties: {
+        databaseAccountOfferType: 'Standard'
+        locations: [
+            {
+                locationName: location
+                failoverPriority: 0
+                isZoneRedundant: false
+            }
+        ]
     }
 }
