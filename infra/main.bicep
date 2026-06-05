@@ -59,7 +59,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     }
 }
 
-resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2025-11-01-preview' = {
+resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' = {
     name: databaseAccountName
     location: location
     kind: 'GlobalDocumentDB'
