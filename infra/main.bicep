@@ -4,6 +4,9 @@ param serviceBusName string = 'smart-order-processor-sb'
 param appServicePlanName string = 'smart-order-processor-plan'
 param functionAppName string = 'smart-order-processor-func'
 param databaseAccountName string = 'smart-order-processor-db'
+param ordersDatabaseName string = 'orders-db'
+param ordersContainerName string = 'orders'
+
 
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
@@ -74,3 +77,30 @@ resource databaseAccount 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' = {
         ]
     }
 }
+
+resource ordersDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-11-15' = {
+    parent: databaseAccount
+    name: ordersDatabaseName
+    properties: {
+        resource: {
+            id: ordersDatabaseName
+        }
+    }
+}
+
+resource ordersContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-11-15' = {
+    parent: ordersDatabase
+    name: ordersContainerName
+    properties: {
+        resource: {
+            id: ordersContainerName
+            partitionKey: {
+                kind: 'Hash'
+                paths: ['/orderId']}
+        }
+    
+    }
+}
+
+
+    
