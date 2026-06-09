@@ -1,0 +1,67 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              },
+              "payment_method": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+        "Send_receipt_email": {
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                    "name": "@parameters('$connections')['office365']['connectionId']"
+                    }
+                },
+                "method": "post",
+                "path": "/Mail",
+                "body": {
+                    "To": "customer@example.com",
+                    "Subject": "Payment confirmation",
+                    "Body": "Your payment of @{triggerBody()?['amount']} for order @{triggerBody()?['order_id']} has been received!"
+                }
+            },
+            "runAfter": {}
+        },
+        "Post_Slack_notification": {
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                    "name": "@parameters('$connections')['slack']['connectionId']"
+                    }
+                },
+                "method": "post",
+                "path": "/chat.postMessage",
+                "body": {
+                    "channel": "#orders",
+                    "text": "New payment received! Order: @{triggerBody()?['order_id']} Amount: @{triggerBody()?['amount']}"
+                }
+            },
+            "runAfter": {
+            "Send_receipt_email": ["Succeeded"]
+            }
+        }
+    }
+  }
+}

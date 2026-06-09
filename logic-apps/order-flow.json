@@ -1,0 +1,60 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "When_a_message_is_received": {
+        "type": "ServiceBus",
+        "inputs": {
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['servicebus']['connectionId']"
+            }
+          },
+          "method": "get",
+          "path": "/orders-queue/messages/head"
+        },
+        "recurrence": {
+          "frequency": "Minute",
+          "interval": 1
+        }
+      }
+    },
+    "actions": {
+      "Save_to_Cosmos_DB": {
+        "type": "ApiConnection",
+        "inputs": {
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['documentdb']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/dbs/orders-db/colls/orders/docs",
+          "body": "@triggerBody()"
+        },
+        "runAfter": {}
+      },
+      "Send_confirmation_email": {
+        "type": "ApiConnection",
+        "inputs": {
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['office365']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/Mail",
+          "body": {
+            "To": "@triggerBody()?['customer']",
+            "Subject": "Order confirmation",
+            "Body": "Your order @{triggerBody()?['order_id']} has been received!"
+          }
+        },
+        "runAfter": {
+          "Save_to_Cosmos_DB": ["Succeeded"]
+        }
+      }
+    }
+  }
+}
