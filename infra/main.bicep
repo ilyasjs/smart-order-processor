@@ -6,6 +6,7 @@ param functionAppName string = 'smart-order-processor-func'
 param databaseAccountName string = 'smart-order-processor-db'
 param ordersDatabaseName string = 'orders-db'
 param ordersContainerName string = 'orders'
+param managementApiName string = 'smart-order-processor-apim'
 
 
 
@@ -100,6 +101,59 @@ resource ordersContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
         }
     
     }
+}
+
+resource managementApi 'Microsoft.ApiManagement/service@2024-05-01' = {
+    name: managementApiName
+    location: location
+    properties: {
+        publisherEmail: 'example@example.com'
+        publisherName: 'myName'
+    }
+    sku: {
+        name: 'Consumption'
+        capacity: 0
+    }
+}
+
+resource orderApi 'Microsoft.ApiManagement/service/apis@2024-05-01' = {
+    parent: managementApi
+    name: 'order-api'
+    properties: {
+        displayName: 'Order API'
+        path: 'orders'
+        protocols: ['https']
+    }
+}
+
+resource placeOrderOperation 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = {
+  parent: orderApi
+  name: 'place-order'
+  properties: {
+    displayName: 'Place Order'
+    method: 'POST'
+    urlTemplate: '/place-order'
+  }
+}
+
+resource getOrderStatus 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = {
+  parent: orderApi
+  name: 'get-order'
+  properties: {
+    displayName: 'Get Order Status'
+    method: 'GET'
+    urlTemplate: '/get-order'
+  }
+}
+
+resource processPayment 'Microsoft.ApiManagement/service/apis/operations@2024-05-01' = {
+  parent: orderApi
+  name: 'process-payment'
+  properties: {
+    displayName: 'Process Payment'
+    method: 'POST'
+    urlTemplate: '/process-payment'
+  }
 }
 
 
